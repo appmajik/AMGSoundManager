@@ -26,6 +26,13 @@
 @property(nonatomic,retain) NSMutableDictionary *sounds;
 @property(nonatomic,weak) id<AMGSoundManagerDelegate> delegate;
 
+/**
+ *  Toggls the global setting for the sound player. If set to NO, the sounds
+ *  will not be played
+ */
+@property (nonatomic, assign) BOOL on;
+
+
 +(AMGSoundManager*)sharedManager;
 
 -(BOOL)playAudioAtPath:(NSString *)audioPath withCompletitionHandler:(void (^)(BOOL success, BOOL stopped))handler;

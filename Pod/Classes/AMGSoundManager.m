@@ -8,6 +8,8 @@
 
 #import "AMGSoundManager.h"
 
+#define kAMGSystemSoundPlayerUserDefaultsKey @"kAMGSystemSoundPlayerUserDefaultsKey"
+
 static AMGSoundManager *_sharedManager;
 
 @implementation AMGSoundManager
@@ -24,6 +26,13 @@ static AMGSoundManager *_sharedManager;
     
 }
 
+- (instancetype)init {
+    self = [super init];
+    if(self) {
+        _on = [self readSoundPlayerOnFromUserDefaults];
+    }
+    return self;
+}
 
 
 -(BOOL)playAudioAtPath:(NSString *)audioPath withCompletitionHandler:(void (^)(BOOL success, BOOL stopped))handler{
@@ -43,7 +52,7 @@ static AMGSoundManager *_sharedManager;
 }
 
 -(BOOL)playAudioAtPath:(NSString *)audioPath withName:(NSString *)name inLine:(NSString *)line withVolum:(float)volum andRepeatCount:(int)repeatCount withCompletitionHandler:(void (^)(BOOL success, BOOL stopped))handler{
-    if(!audioPath || [audioPath compare:@""]==NSOrderedSame)
+    if(!audioPath || [audioPath compare:@""]==NSOrderedSame || !_on)
         return NO;
     if(!line)
         line = kAMGSoundManagerDefaultLine;
@@ -92,7 +101,7 @@ static AMGSoundManager *_sharedManager;
 }
 
 -(BOOL)playAudioWithData:(NSData *)data withName:(NSString *)name inLine:(NSString *)line withVolum:(float)volum andRepeatCount:(int)repeatCount withCompletitionHandler:(void (^)(BOOL success, BOOL stopped))handler{
-    if(!data || data.length == 0)
+    if(!data || data.length == 0 || !_on)
         return NO;
     if(!line)
         line = @"default";
@@ -235,10 +244,12 @@ static AMGSoundManager *_sharedManager;
 }
 
 -(BOOL)isAudioPlayingInLine:(NSString *)line{
+    if(!_on) return NO;
     return [self isAudioPlayingInLine:line withName:nil];
 }
 
 -(BOOL)isAudioPlayingInLine:(NSString *)line withName:(NSString *)name{
+    if(!_on) return NO;
     for(NSString *key in self.sounds.allKeys){
         if(line && [line compare:key]!=NSOrderedSame)
             continue;
@@ -303,5 +314,28 @@ static AMGSoundManager *_sharedManager;
     }
 }
 
+- (void)setOn:(BOOL)on {
+  _on = on;
+  NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+  [userDefaults setObject:[NSNumber numberWithBool:on]
+                   forKey:kAMGSystemSoundPlayerUserDefaultsKey];
+  [userDefaults synchronize];
+
+  if (!on) {
+    [self stopAllAudios];
+  }
+}
+
+- (BOOL)readSoundPlayerOnFromUserDefaults {
+  NSNumber *setting = [[NSUserDefaults standardUserDefaults]
+      objectForKey:kAMGSystemSoundPlayerUserDefaultsKey];
+
+  if (!setting) {
+    self.on = YES;
+    return YES;
+  }
+
+  return [setting boolValue];
+}
 
 @end
